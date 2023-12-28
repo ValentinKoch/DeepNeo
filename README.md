@@ -25,10 +25,29 @@ The user interface of our webtool, which provides a user-friendly platform for t
 
 To run the DeepNeo online tool, follow these steps:
 
-#### Step 1: Clone the Repository
+#### **Step 1: Clone the Repository**
 First, clone this repository to your local machine.
 ```git
 git clone https://github.com/ValentinKoch/DeepNeo.git
-
-
-
+```
+#### **Step 2: Navigate to the App Folder**
+```git
+cd app
+```
+#### **Step 3: Create a Conda Environment**
+```git
+conda create --name DeepNeo --file requirements.txt
+```
+#### **Step 4: Activate the Environment**
+```git
+conda activate DeepNeo
+```
+#### **Step 5: Update Configuration File**
+Before running the application, update the configuration file to match your system's paths. Locate the config.py file in the app folder and make the necessary adjustments to the folder paths.
+#### **Step 6: Run the Application**
+Within the app folder, start the DeepNeo web application by executing:
+```git
+python run_gradio.py
+```
+#### **Step 7: Access the Web Application**
+After running the script, a local server will start, and a URL will be generated. Open this URL in your web browser to access the DeepNeo web application. 
