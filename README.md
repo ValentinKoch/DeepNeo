@@ -26,7 +26,8 @@ The user interface of our webtool, which provides a user-friendly platform for t
 To run the DeepNeo online tool, follow these steps:
 
 #### Step 1: Clone the Repository
-
+First, clone this repository to your local machine.
+'''git clone https://github.com/ValentinKoch/DeepNeo.git'''
 
 
 
