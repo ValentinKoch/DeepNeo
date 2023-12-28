@@ -31,10 +31,10 @@ import numpy as np
 IMAGE_SIZE_QUADRANT=224
 IMAGE_SIZE_SEGMENTATION=512
 
-CLASS_MODEL_PATH="../models/class_model_deep_neo.pth"
-SEG_MODEL_PATH="../models/model_stent_end.pth"
-CALC_MODEL_PATH="../models/model_state_dict_calc.pth"
-ZIP_PATH="../" 
+CLASS_MODEL_PATH="/home/ubuntu/DeepNeo/models/class_model_deep_neo.pth"
+SEG_MODEL_PATH="/home/ubuntu/DeepNeo/models/model_stent_end.pth"
+CALC_MODEL_PATH="/home/ubuntu/DeepNeo/models/model_state_dict_calc.pth"
+ZIP_PATH="/home/ubuntu/DeepNeo/" 
 NUM_CLASSES=4
 
 os.environ['CUDA_LAUNCH_BLOCKING'] = '1'
@@ -260,7 +260,7 @@ def main(dicom_file, stent_range, neointima):
             neointima,
             pixel_spacing_val,
             slice_thickness_val,
-            gr.update(value=image_html("./styles/" + legend), visible=True) #legend
+            gr.update(value=image_html("/home/ubuntu/DeepNeo/app/styles/" + legend), visible=True) #legend
         )
     
     except ClientError as e:
@@ -271,7 +271,7 @@ def main(dicom_file, stent_range, neointima):
 
 
 def check_credentials(username, password):
-    with open("./pw_files/pw_data.yaml") as f:
+    with open("/home/ubuntu/ece-dev-deepneo/gradi/app/pw_files/pw_data.yaml") as f:
         pw_dict = yaml.safe_load(f)
         if not username in pw_dict.keys():
             return False
@@ -298,7 +298,7 @@ with gr.Blocks(css=config.CSS_FILE, title="DeepNeo") as demo:
     slice_thickness=gr.State(value=None)
 
     init_logo = gr.HTML(
-        value=image_html("./styles/logos/deepneo_logo_plus.png"),
+        value=image_html("/home/ubuntu/DeepNeo/app/styles/logos/deepneo_logo_plus.png"),
         visible=True,
     )
     with gr.Row() as initial_row:
@@ -320,7 +320,7 @@ with gr.Blocks(css=config.CSS_FILE, title="DeepNeo") as demo:
             info = gr.Text("Input either a DICOM file or a ",label="")
 
         logo = gr.HTML(
-            value=image_html("./styles/logos/deepneo_logo_plus.png"),
+            value=image_html("/home/ubuntu/DeepNeo/app/styles/logos/deepneo_logo_plus.png"),
         )
 
     with gr.Row(visible=False) as visualization_row:
@@ -474,7 +474,7 @@ demo.launch(
     auth=check_credentials,
     server_name="0.0.0.0",
     show_error=True,
-    favicon_path="./styles/deepneo_small.png",
+    favicon_path="/home/ubuntu/ece-dev-deepneo/gradi/app/styles/deepneo_small.png",
     auth_message="Please provide your username and password.",
     show_api=False,
     share=True,
