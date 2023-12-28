@@ -23,6 +23,9 @@ We provide an online tool for researchers to quickly analyze and download result
 [![Demo Video](media/deepneo_figure8.png?raw=true)](https://www.youtube.com/watch?v=u5l_Mjlfai4)
 The user interface of our webtool, which provides a user-friendly platform for the analysis of intravascular OCT images. The interface is designed with several features to facilitate accurate and efficient analysis, including an upload mask (A), which allows users to upload OCT pullback images (DICOM or .zip), a visual representation of the current OCT frame with segmentation and neointima prediction, a schematic view  of quadrants (C1) (top row represents quadrant I, bottom row quadrant IV) and neointima and lumen (C2) that provides a visual representation of the tissue characteristics, including a slider (C3) that enables users to move through the pullback. In addition, the interface includes a pullback analysis (D) that provides a detailed analysis of the OCT images and a manual correction feature (E) to correct beginning and end of the stent if necessary. The webtool also allows users to download a detailed analysis of their results and provides an information tab (F) for additional guidance. Users are required to accept the research-only use on the welcome page (G) before accessing the tool.
 
+To run the DeepNeo online tool, follow these steps:
+
+# Step 1: Clone the Repository
 
 
 
