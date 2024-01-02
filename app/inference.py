@@ -16,9 +16,8 @@ import torch.nn.functional as F
 from data_handler import (get_lumen_radius, get_neointima_thickness,
                           get_quadranted_images, get_smallest_lumen,
                           get_stent_nr, postprocess, process_range_string,
-                          save_files_to_s3, summarize, summarize_calc,get_class_volume_mm2)
-from html_handler import create_html, create_html_calc
-from calc_scoring import get_calc_score
+                          save_files_to_s3, summarize,get_class_volume_mm2)
+from html_handler import create_html
 from visualization import (colour_image_border, mark_and_draw,
                            draw_final_schematic_view, visualize_all)
 
@@ -34,50 +33,11 @@ def update_slider(nr_updates):
     return update_arr
 
 
-def update_wrap(range_string, save_path, nr_updates, slice_thickness, pixel_spacing, neointima_flag): 
+def update_wrap(range_string, save_path, nr_updates, slice_thickness, pixel_spacing): 
     
-    if neointima_flag:
-        file_path, _, html, _, html_summary= update_neointima(range_string, save_path, nr_updates)
-    else:
-        file_path, _, html, _, html_summary = update_calc(range_string, save_path, nr_updates, slice_thickness, pixel_spacing)
+    file_path, _, html, _, html_summary= update_neointima(range_string, save_path, nr_updates)
     s0, s1, s2, s3 = update_slider(nr_updates)
     return file_path, html, html_summary, nr_updates + 1, s0, s1, s2, s3
-
-def update_calc(range_string, save_path,nr_updates,slice_thickness, pixel_spacing):
-    folder_name = os.path.basename(os.path.normpath(save_path))
-    prediction_df = pd.read_csv(
-        os.path.join(save_path, "predictions_calc.csv")
-    ).set_index("image")
-    string_indeces,_ = process_range_string(range_string,len(prediction_df),None,False)
-    #prediction_df = postprocess(prediction_df, string_indeces)
-    prediction_df.loc[:, "use_for_summary"] = 0
-
-    for index in string_indeces:
-        prediction_df.at[int(index), "use_for_summary"] = 1
-    
-    prediction_df.to_csv(os.path.join(save_path, "predictions_calc.csv"))
-
-    visualize_all(save_path, neointima_flag=False)
-
-    zip_file_path = os.path.join(config.ZIP_PATH, folder_name)
-    
-    shutil.make_archive(zip_file_path, "zip", save_path)
-
-    schematic_view = draw_final_schematic_view(prediction_df,os.path.join(save_path, "masks"),False)
-    schematic_view.save(os.path.join(save_path, "schematic.png"))
-    print("saved at ", os.path.join(save_path, "schematic.png"))
-    schematic_view.save(os.path.join(config.FILE_DIR,"schema"+str(nr_updates)+".png"))
-
-    max_thickness,max_degree,max_length, score= get_calc_score(prediction_df,os.path.join(save_path, "masks"),pixel_spacing,slice_thickness)
-    mark_and_draw(max_thickness)
-    html_summary = summarize_calc(save_path, max_thickness,max_degree,max_length, score, range_string)
-    return (
-        zip_file_path + ".zip",
-        save_path,
-        create_html_calc(save_path, html_summary),
-        len(prediction_df)-1,
-        html_summary
-    )
 
 def update_neointima(range_string, save_path, nr_updates):
     folder_name = os.path.basename(os.path.normpath(save_path))
@@ -95,7 +55,7 @@ def update_neointima(range_string, save_path, nr_updates):
 
     prediction_df = postprocess(prediction_df)
     prediction_df.to_csv(os.path.join(save_path, "predictions.csv"))
-    visualize_all(save_path, True)
+    visualize_all(save_path)
 
     smallest_lumen_image, lumen_area = get_smallest_lumen(save_path)
     im_path_seg = os.path.join(
@@ -115,7 +75,7 @@ def update_neointima(range_string, save_path, nr_updates):
 
     shutil.make_archive(zip_file_path, "zip", save_path)
 
-    schematic_view = draw_final_schematic_view(prediction_df,os.path.join(save_path,"masks"),True)
+    schematic_view = draw_final_schematic_view(prediction_df,os.path.join(save_path,"masks"))
     schematic_view.save(os.path.join(save_path, "schematic.png"))
     schematic_view.save(
         os.path.join(config.FILE_DIR, "schema" + str(nr_updates) + ".png")
@@ -263,13 +223,6 @@ def move_files(source_path, target_path, file_type=config.IMAGE_TYPE):
     for file in all_files:
         shutil.move(file, target_path)
 
-
-# def get_test_time_augmented_mask_predictions(model, image):
-#     softmax2d = torch.nn.Softmax2d()
-#     mask = softmax2d(model(image))
-#     return mask
-
-
 def get_test_time_augmented_predictions(model, image):
     softmax = torch.nn.Softmax(dim=1)
     labels = []
@@ -290,56 +243,6 @@ def get_test_time_augmented_predictions(model, image):
     label = np.mean(np.array(labels) ** 0.5, axis=0)
 
     return label
-
-def inference_calc(range_string, dataloader, seg_model, save_path, slice_thickness, pixel_spacing):
-    mask_path = os.path.join(save_path, "masks")
-    im_path_seg = os.path.join(save_path, "masks_coloured")
-    os.makedirs(mask_path)
-    os.makedirs(im_path_seg)
-    os.makedirs(os.path.join(save_path,"images_coloured"))
-
-    device = torch.device('cuda:0' if torch.cuda.is_available() else 'cpu')
-    print("DEVICE")
-    print(device)
-    seg_model = seg_model.to(device)
-
-    print("Starting prediction..")
-    time_0 = time.time()
-    prediction_df_path = os.path.join(save_path, "predictions_calc.csv")
-
-    with open(prediction_df_path, "w") as f:
-        writer = csv.writer(f)
-        row = ["image", "lumen radius", "calc", "lesion","use_for_summary"]
-        writer.writerow(row)
-    print("dataloader", len(dataloader))
-    for batch in dataloader:
-        with torch.no_grad():
-            #masks = (np.argmax(seg_model(batch["image"]), axis=1).numpy().astype(np.uint8))
-            masks=np.argmax(get_test_time_augmented_mask_predictions(seg_model,batch["image"]), axis=1).astype(np.uint8)
-
-        with open(prediction_df_path, "a") as f:
-
-            writer = csv.writer(f)
-            for (image_name, mask) in zip(batch["filename"], masks):
-                lumen_radius = get_lumen_radius(mask,pixel_spacing)
-                calc = (
-                    get_class_volume_mm2(mask, pixel_spacing, class_nr=config.CALC_CLASS)
-                )
-                lesion = (
-                    get_class_volume_mm2(mask, pixel_spacing, class_nr=config.LESION_CLASS)
-                )
-                Image.fromarray(mask).save(
-                    os.path.join(mask_path, image_name + config.IMAGE_TYPE)
-                )
-                row=[image_name,lumen_radius,calc,lesion,1]
-                writer.writerow(row)
-
-    print(time.time() - time_0, "s for prediction")
-    print("Clearing cache")
-    torch.cuda.empty_cache()
-    return update_calc(range_string, save_path, 0, slice_thickness, pixel_spacing)
-
-
 
 def get_test_time_augmented_mask_predictions(model, image):
     softmax2d = torch.nn.Softmax2d()

@@ -15,7 +15,7 @@ import config
 from data_handler import process_dicom,process_zip
 from dataset import InferenceDataset
 from html_handler import create_html, image_html
-from inference import inference_neointima, update_wrap,inference_calc
+from inference import inference_neointima, update_wrap
 import torch.nn as nn
 
 from PIL import Image
@@ -33,7 +33,6 @@ IMAGE_SIZE_SEGMENTATION=512
 
 CLASS_MODEL_PATH="/home/ubuntu/DeepNeo/models/class_model_deep_neo.pth"
 SEG_MODEL_PATH="/home/ubuntu/DeepNeo/models/model_stent_end.pth"
-CALC_MODEL_PATH="/home/ubuntu/DeepNeo/models/model_state_dict_calc.pth"
 ZIP_PATH="/home/ubuntu/DeepNeo/" 
 NUM_CLASSES=4
 
@@ -204,17 +203,7 @@ SEG_MODEL=load_model_dict(SEG_MODEL_PATH,seg_model)
 
 CLASS_MODEL=load_model_dict(CLASS_MODEL_PATH,class_model)
 
-calc_model = get_model(classification=False)
-CALC_MODEL = load_model_dict(CALC_MODEL_PATH, calc_model)
-
-def main_seg(inp, stent_range):
-    return main(inp, stent_range, True)
-
-def main_calc(inp, stent_range):
-
-    return main(inp, stent_range, False)
-
-def main(dicom_file, stent_range, neointima):
+def main(dicom_file, stent_range):
     # start_time=time.time()
     try:
         if '.zip' in dicom_file.name:
@@ -237,14 +226,10 @@ def main(dicom_file, stent_range, neointima):
             num_workers=0,
             drop_last=False,
         )
-        if neointima:
-            vis_out, image_path_gr, html_visualization, nr_images, html_summary = inference_neointima(
-                stent_range, dataloader, SEG_MODEL, CLASS_MODEL, image_path,slice_thickness_val,pixel_spacing_val
-            )
-            legend = 'legend.png'
-        else:
-            vis_out, image_path_gr, html_visualization, nr_images, html_summary=inference_calc(stent_range, dataloader, CALC_MODEL, image_path, slice_thickness_val, pixel_spacing_val)
-            legend = 'calc_legend2.png'
+
+        vis_out, image_path_gr, html_visualization, nr_images, html_summary = inference_neointima(
+            stent_range, dataloader, SEG_MODEL, CLASS_MODEL, image_path,slice_thickness_val,pixel_spacing_val)
+        legend = 'legend.png'
         
         return (
             vis_out,
@@ -253,11 +238,9 @@ def main(dicom_file, stent_range, neointima):
             nr_images,
             gr.update(visible=True),  #update
             gr.update(visible=False), #seg
-            gr.update(visible=False),  #calc
             html_summary,
             gr.update(visible=True),
             1,
-            neointima,
             pixel_spacing_val,
             slice_thickness_val,
             gr.update(value=image_html("/home/ubuntu/DeepNeo/app/styles/" + legend), visible=True) #legend
@@ -293,7 +276,6 @@ with gr.Blocks(css=config.CSS_FILE, title="DeepNeo") as demo:
     nr_images = gr.Number(value=1, interactive=True, visible=False)
     timestamp_gr = gr.State(value="")
     summary_html = gr.State(value="")
-    neointima_flag=gr.State(value=None)
     pixel_spacing=gr.State(value=None)
     slice_thickness=gr.State(value=None)
 
@@ -347,9 +329,6 @@ with gr.Blocks(css=config.CSS_FILE, title="DeepNeo") as demo:
                 btn_run_seg = gr.Button("Neointima analysis", visible=True)
                 button_update = gr.Button("Update", visible=False)
 
-            with gr.Row() as new_row:
-                btn_run_calc = gr.Button("Native Calc & Lesion analysis", visible=True)
-
         with gr.Column():
             stent_range = gr.Textbox(max_lines=1, label="Manually input range", visible=False)
             
@@ -368,8 +347,7 @@ with gr.Blocks(css=config.CSS_FILE, title="DeepNeo") as demo:
                 init_logo: gr.update(visible=False),
                 initial_row: gr.update(visible=False),
                 accept_row: gr.update(visible=False),
-                another_row:gr.update(visible=True),
-                neointima_flag:gr.update(value=True)
+                another_row:gr.update(visible=True)
             }
         else:
             raise ValueError("Please accept the terms to proceed.")
@@ -388,14 +366,13 @@ with gr.Blocks(css=config.CSS_FILE, title="DeepNeo") as demo:
             initial_row,
             accept_row,
             another_row,
-            neointima_flag,
         ],
     )
     nr_images.change(
         fn=change_vals, inputs=nr_images, outputs=[slider0, slider1, slider2, slider3]
     )
     btn_run_seg.click(
-        fn=main_seg,
+        fn=main,
         inputs=[inp, stent_range],
         outputs=[
             vis_out,
@@ -404,39 +381,17 @@ with gr.Blocks(css=config.CSS_FILE, title="DeepNeo") as demo:
             nr_images,
             button_update,
             btn_run_seg,
-            btn_run_calc,
             summary_html,
             slider0,
             nr_updates,
-            neointima_flag,
             pixel_spacing,
             slice_thickness,
             Legend,
         ],
     )
-    btn_run_calc.click(
-        fn=main_calc,
-        inputs=[inp, stent_range],
-        outputs=[
-            vis_out,
-            image_path_gr,
-            html_visualization,
-            nr_images,
-            button_update, 
-            btn_run_seg,
-            btn_run_calc,
-            summary_html,
-            slider0,
-            nr_updates,
-            neointima_flag,
-            pixel_spacing,
-            slice_thickness,
-            Legend
-        ],
-    )
     button_update.click(
         fn=update_wrap, 
-        inputs=[stent_range, image_path_gr, nr_updates, slice_thickness, pixel_spacing, neointima_flag],
+        inputs=[stent_range, image_path_gr, nr_updates, slice_thickness, pixel_spacing],
         outputs=[
             vis_out,
             html_visualization,

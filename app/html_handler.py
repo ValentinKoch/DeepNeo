@@ -84,54 +84,6 @@ def create_html(
 
     return html
 
-def create_html_calc(image_save_path, summary_html, i=0, im_path_seg=None, im_path_class=None, im_path_raw=None):
-    os.chdir(config.APP_DIR)
-    
-    if image_save_path == "":
-        return ""
-    
-    if im_path_seg is None:
-        all_ims_seg = Path(os.path.join(image_save_path, "masks_coloured")).glob("*.png")
-        im_path_seg = sorted(all_ims_seg)[i]
-        
-    if im_path_raw is None and os.path.exists(os.path.join(image_save_path, "images_coloured")):
-        all_ims_raw = list(Path(os.path.join(image_save_path, "images_coloured")).glob("*.jpg"))
-        if len(list(all_ims_raw)) > 0:
-            im_path_raw = sorted(list(all_ims_raw))[i]
-        else:
-            all_ims_raw = list(Path(os.path.join(image_save_path, "images_coloured")).glob("*.jpg"))
-            if len(list(all_ims_raw)) > 0:
-                im_path_raw = sorted(list(all_ims_raw))[i]
-    
-    if im_path_raw is not None:
-        relative_path_raw = os.path.relpath(im_path_raw, config.APP_DIR)
-        processed_im_path_raw = "file/./" + relative_path_raw
-    else:
-        processed_im_path_raw = ""
-        
-    relative_path_seg = os.path.relpath(im_path_seg, config.APP_DIR)
-    processed_im_path_seg = "file/./" + relative_path_seg
-
-    html = """
-        <div class="row">
-            """ + ("""
-            <div class="column">
-                <img src='""" + processed_im_path_raw + """' style="width:100%">
-            </div>
-            """ if processed_im_path_raw else "") + """
-            <div class="column">
-                <img src='""" + processed_im_path_seg + """' style="width:100%">
-                
-            </div>
-            <div class = "column> """ + summary_html + """ </div>
-        </div>
-        <p>""" + str(i) + """</p>
-    """
-
-
-    
-    return html
-
 def image_html(*image_paths):
     os.chdir(config.APP_DIR)
     html_string = "<html><body stye='color:white'>"

@@ -586,35 +586,3 @@ def save_files_to_s3(filename):
         Bucket="deepneo-storage",
         Key=Path(filename).name,
     )
-
-def summarize_calc(save_path, max_thickness,max_degree,max_length, score, range_string):
-    summary_dict = {}
-
-    print("max calc thickness from summarize_calc: ", max_thickness)
-
-    predictions_df = pd.read_csv(
-        os.path.join(save_path, "predictions_calc.csv")
-    ).set_index("image")
-
-    filtered = predictions_df[predictions_df.use_for_summary == 1]
-
-    summary_dict["avg lumen radius"]=str(np.round(np.average(filtered["lumen radius"]),3)) + " mm"
-    summary_dict["min lumen radius"]=str(np.round(np.min(filtered["lumen radius"]),3)) + " mm"
-    summary_dict["avg calc"] =str(np.round(np.average(filtered["calc"]),4)) + " mm2"
-    summary_dict["total calc"]=str(np.round(np.sum(filtered["calc"]),2))+ " mm2"
-    summary_dict["avg lesion"]=str(np.round(np.average(filtered["lesion"]),4)) + " mm2"
-    summary_dict["total lesion"]=str(np.round(np.sum(filtered["lesion"]),2)) + " mm2"
-    summary_dict["considered regions"] = range_string
-    summary_dict["max calc thickness"] =str(np.round(max_thickness["value"],2))+" mm (" + str(max_thickness["index"])+")"
-    summary_dict["max calc angle"] =str(np.round(max_degree["value"],1))+"° (" + str(max_degree["index"])+")"
-    summary_dict["max calc length"] =str(np.round(max_length["value"],1))+" mm (" + str(max_length["start_index"])+"-"+str(max_length["end_index"])+")"
-    summary_dict["calc score"] = score
-
-
-    with open(os.path.join(save_path, "summary.csv"), "w") as f:
-        writer = csv.writer(f)
-
-        for key, value in summary_dict.items():
-            writer.writerow([key, str(value)])
-
-    return create_summary_html(summary_dict)

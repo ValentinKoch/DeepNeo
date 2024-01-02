@@ -147,27 +147,6 @@ def draw_schematic_view_neointima(mask_folder,dataframe,offset=5,height=50,lumen
 
 #------------------
 
-
-
-def colour_mask_calc(mask,show_all_classes=True):
-    if show_all_classes:
-        colours=np.array([[150., 150., 150.],#0 gray background
-                             [210, 152, 59], #1 orange lesion
-                             [209, 46, 34],# calc red
-                             [100., 100., 100.],#3 lumen dark gray
-                             [0,0,255], #blue for checking
-                             ])
-    else:
-        colours= np.array([[150., 150., 150.],#0 grau background
-                             [100., 100., 100.], #1 
-                             [150., 150., 150.],#2 
-                             [150., 150., 150.],#3 
-                             ])
-    rgb_im=np.stack((mask,)*3, axis=-1)
-    for i in range(len(colours)):
-        rgb_im=np.where(rgb_im==(i,i,i),colours[i],rgb_im)
-    return rgb_im
-
 def mark_and_draw(max_thickness):
     if max_thickness["value"]>0:
         image_path,point1,point2=max_thickness["im_path"].replace("masks","masks_coloured"),max_thickness["points"][0],max_thickness["points"][1]
@@ -186,104 +165,49 @@ def mark_and_draw(max_thickness):
         cv2.imwrite(image_path, image)
     # Display the image with the marked points and line
 
-def visualize_all(save_path, neointima_flag):
+def visualize_all(save_path):
     
     all_images=sorted(Path(os.path.join(save_path,"raw_images")).glob("*"+config.IMAGE_TYPE))
     all_masks=sorted(Path(os.path.join(save_path,"masks")).glob("*"+config.IMAGE_TYPE))
     time_0=time.time()
     pool = ThreadPool(4)
-    if neointima_flag:
-        all_preds=pd.read_csv(os.path.join(save_path,"predictions.csv")).set_index("image")
-        thread_array=[(image,all_preds,mask,save_path) for (image,mask) in zip (all_images,all_masks)]
-        pool.map(multi_core_vis_neointima, thread_array)
-    else:
-        thread_array=[(image_path,mask_path,save_path) for (image_path,mask_path) in zip (all_images,all_masks)]
-        pool.map(multi_core_vis_calc, thread_array)
+    all_preds=pd.read_csv(os.path.join(save_path,"predictions.csv")).set_index("image")
+    thread_array=[(image,all_preds,mask,save_path) for (image,mask) in zip (all_images,all_masks)]
+    pool.map(multi_core_vis_neointima, thread_array)
+
     print("time multiprocess visualization:",time.time()-time_0)
-
-
-def multi_core_vis_calc(inputs):
-    image_path,mask_path,save_path=inputs
-    visualization_calc(image_path, mask_path, save_path)
-
-def visualization_calc(image_path,mask_path,save_path, size=(512,512)):
-    
-    image=colour_np_array(np.array(Image.open(image_path).resize(size,Image.Resampling.NEAREST)))
-    image_name=Path(image_path).stem
-
-    mask=np.array(Image.open(mask_path))    
-    image.save(os.path.join(save_path, "images_coloured", image_name+".jpg"))
-
-    coloured_mask=colour_mask_calc(mask)
-        
-    image_save_path=os.path.join(save_path, "masks_coloured", image_name+".png")
-    Image.fromarray(coloured_mask.astype(np.uint8)).save(image_save_path)
 
 def get_colour(label):
     return ["#3399ffff","#5aea13ff","#ffb219ff","#e30808ff"][int(label)]
 
-def draw_final_schematic_view(prediction_df,mask_folder, neointima_flag):
+def draw_final_schematic_view(prediction_df,mask_folder):
 
     with ThreadPoolExecutor(max_workers=config.BATCH_SIZE) as executor:
         #submit the function to the thread pool
-        if neointima_flag:
-            view_future = executor.submit(draw_schematic_view_quadrants, prediction_df)
-            lumen_future = executor.submit(draw_schematic_view_neointima, mask_folder,prediction_df)
-            #lumen_future = executor.submit(draw_schematic_view_lumen, mask_folder)
-        else:
-            view_future = executor.submit(draw_schematic_view_calc, mask_folder,prediction_df)
+        view_future = executor.submit(draw_schematic_view_quadrants, prediction_df)
+        lumen_future = executor.submit(draw_schematic_view_neointima, mask_folder,prediction_df)
+        #lumen_future = executor.submit(draw_schematic_view_lumen, mask_folder)
         
         #wait for the results
-        if not neointima_flag:
-            overview = view_future.result()
-            overview=Image.fromarray(np.uint8(colour_mask_calc(overview))).transpose(Image.FLIP_LEFT_RIGHT) #could rewrite to avoid flip here
-        else:
-            overview_view = view_future.result()
-            overview_lumen = lumen_future.result()
 
-            # Convert arrays to images if they are not already
-            if not isinstance(overview_view, Image.Image):
-                overview_view = Image.fromarray(overview_view)
-            if not isinstance(overview_lumen, Image.Image):
-                overview_lumen = Image.fromarray(overview_lumen)
+        overview_view = view_future.result()
+        overview_lumen = lumen_future.result()
 
-            # Concatenate the two images vertically
-            total_height = overview_view.height + overview_lumen.height
-            combined_image = Image.new('RGB', (overview_view.width, total_height))
-            combined_image.paste(overview_view, (0, 0))
-            combined_image.paste(overview_lumen, (0, overview_view.height))
+        # Convert arrays to images if they are not already
+        if not isinstance(overview_view, Image.Image):
+            overview_view = Image.fromarray(overview_view)
+        if not isinstance(overview_lumen, Image.Image):
+            overview_lumen = Image.fromarray(overview_lumen)
 
-            overview = combined_image
+        # Concatenate the two images vertically
+        total_height = overview_view.height + overview_lumen.height
+        combined_image = Image.new('RGB', (overview_view.width, total_height))
+        combined_image.paste(overview_view, (0, 0))
+        combined_image.paste(overview_lumen, (0, overview_view.height))
+
+        overview = combined_image
+
         return overview       
-
-def draw_schematic_view_calc(mask_folder, prediction_df, offset=5):
-    time1 = time.time()
-    all_masks = sorted(Path(mask_folder).glob("*.tif"))
-    im = None
-
-    for i, mask_path in enumerate(all_masks):
-        name = int(Path(mask_path).stem)
-        region_of_interest = prediction_df.loc[name]["use_for_summary"] == 1
-        if region_of_interest:
-            mask = Image.open(mask_path).resize((256, 256), Image.NEAREST)
-        else:
-            mask = None
-        
-        mask_a_line = a_line(mask, offset)
-        
-        # Calculate the amount of shift needed to center the lumen
-        shift_amount = calculate_shift(mask_a_line)
-        
-        # Apply the circular shift to center the lumen
-        mask_a_line = circular_shift(mask_a_line, shift_amount)
-        
-        if i == 0:
-            im = mask_a_line
-        else:
-            im = np.concatenate([mask_a_line, im], axis=1)
-
-    print(time.time() - time1)
-    return im
 
 def calculate_shift(mask_a_line):
     # Find indices where the mask is dark gray (lumen)
