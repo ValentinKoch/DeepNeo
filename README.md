@@ -12,7 +12,7 @@ Valentin Koch<sup>1,2</sup>, Olle Holmberg<sup>1,2,3</sup>, Edna Blum <sup>4</su
  </sub>
  
 ### Introduction
-We present DeepNeo, a deep learning-based algorithm, to automate the process of segmenting and characterizing neointimal tissue of stented patients (tissue that grows over the stent) in optical coherence tomography (OCT) images. OCT is a tool that provides high-resolution imaging of stented segments after PCI (percutaneous coronary intervention, a non-surgical procedure that improves blood flow to the heart, e.g. by implanting a stent). 
+We present [DeepNeo](https://www.medrxiv.org/content/10.1101/2024.06.14.23300272v1), a deep learning-based algorithm, to automate the process of segmenting and characterizing neointimal tissue of stented patients (tissue that grows over the stent) in optical coherence tomography (OCT) images. OCT is a tool that provides high-resolution imaging of stented segments after PCI (percutaneous coronary intervention, a non-surgical procedure that improves blood flow to the heart, e.g. by implanting a stent). 
 ![DeepNeo overview](media/deepneo_graphical_abstract.png?raw=true "DeepNeo overview figure")
 
 
