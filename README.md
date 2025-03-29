@@ -1,3 +1,10 @@
+<p align="center">
+  <a href="https://doi.org/10.5281/zenodo.15036183">
+    <img src="https://zenodo.org/badge/650623657.svg" alt="DOI">
+  </a>
+</p>
+
+
 # DeepNeo: Deep Learning for neointimal tissue characterization using optical coherence tomography
 
 **Valentin Koch**<sup>1,2,3</sup>, **Olle Holmberg**<sup>1,2,4</sup>, **Edna Blum**<sup>5</sup>, **Ece Sancar**<sup>1,2</sup>, **Alp Aytekin**<sup>5</sup>, **Masaru Seguchi**<sup>5</sup>, **Erion Xhepa**<sup>5</sup>, **Jens Wiebe**<sup>5</sup>, **Salvatore Cassese**<sup>5</sup>, **Sebastian Kufner**<sup>5</sup>, **Thorsten Kessler**<sup>5,6</sup>, **Hendrik Sager**<sup>5,6</sup>, **Felix Voll**<sup>5</sup>, **Tobias Rheude**<sup>5</sup>, **Tobias Lenz**<sup>5</sup>, **Adnan Kastrati**<sup>5,6</sup>, **Heribert Schunkert**<sup>5,6</sup>, **Julia A. Schnabel**<sup>1,2,7</sup>, **Michael Joner**<sup>5,6</sup>, **Carsten Marr**<sup>1</sup>, **Philipp Nicol**<sup>5</sup>
