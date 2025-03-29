@@ -18,12 +18,13 @@ We present DeepNeo, a deep learning-based algorithm, to automate the process of 
 
 ### Demo
 
-We provide an online tool for researchers to quickly analyze and download results, 
+We provide a tool for researchers to quickly analyze and download results, 
 #### click on the image for a video demonstration:
 [![Demo Video](media/deepneo_figure8.png?raw=true)](https://www.youtube.com/watch?v=u5l_Mjlfai4)
-The user interface of our webtool, which provides a user-friendly platform for the analysis of intravascular OCT images. The interface is designed with several features to facilitate accurate and efficient analysis, including an upload mask (A), which allows users to upload OCT pullback images (DICOM or .zip), a visual representation of the current OCT frame with segmentation and neointima prediction, a schematic view  of quadrants (C1) (top row represents quadrant I, bottom row quadrant IV) and neointima and lumen (C2) that provides a visual representation of the tissue characteristics, including a slider (C3) that enables users to move through the pullback. In addition, the interface includes a pullback analysis (D) that provides a detailed analysis of the OCT images and a manual correction feature (E) to correct beginning and end of the stent if necessary. The webtool also allows users to download a detailed analysis of their results and provides an information tab (F) for additional guidance. Users are required to accept the research-only use on the welcome page (G) before accessing the tool.
+The user-friendly interface is designed with several features to facilitate accurate and efficient analysis, including an upload mask (a), which allows users to upload OCT pullback images (DICOM or .zip), a visual representation of the current OCT frame with segmentation and neointima prediction (b), a schematic view of quadrants (c) (top row represents quadrant I, bottom row quadrant IV) and neointima and lumen (d) that provides a visual representation of the tissue characteristics, including a slider that enables users to move through the pullback. In addition, the interface includes a pullback analysis (e) that provides a detailed analysis of the OCT images and a manual correction feature (f) to correct beginning and end of the stent if necessary. The webtool also allows users to download a detailed analysis of their results and provides an information tab (g) for additional guidance. Users are required to accept the research-only use on the welcome page (h) before accessing the tool. 
+
 ### Usage
-To run the DeepNeo online tool, follow these steps:
+To run the DeepNeo tool, follow these steps:
 
 #### **Step 1: Clone the Repository**
 First, clone this repository to your local machine.
@@ -51,3 +52,7 @@ python run_gradio.py
 ```
 #### **Step 7: Access the Web Application**
 After running the script, a local server will start, and a URL will be generated. Open this URL in your web browser to access the DeepNeo web application. 
+
+
+### Models & Contact
+We are very happy to provide models, please request them at [Zenodo](https://zenodo.org/records/14556455) and contact Valentin Koch (valentin.koch@helmholtz-munich.de), Carsten Marr (carsten.marr@helmholtz-munich.de), or Michael Joner (joner@dhm.mhn.de).
