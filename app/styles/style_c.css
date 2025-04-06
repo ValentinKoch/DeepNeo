@@ -105,7 +105,7 @@
 
 #sliderelement0
     input[type="range"] {
-          background-image: url('file/./data/schema0.png');
+          background-image: url('./data/schema0.png');
           background-size: 100% 120px;
           height: 150px;
           background-position: center center;
@@ -117,7 +117,7 @@
         
 #sliderelement1
     input[type="range"] {
-          background-image: url('file/./data/schema1.png');
+          background-image: url('./data/schema1.png');
           background-size: 100% 120px;
           height: 150px;
           background-position: center center;
@@ -128,7 +128,7 @@
         }
 #sliderelement2
     input[type="range"] {
-          background-image: url('file/./data/schema2.png');
+          background-image: url('./data/schema2.png');
           background-size: 100% 120px;
           height: 150px;
           background-position: center center;
@@ -139,7 +139,7 @@
         }
 #sliderelement3
     input[type="range"] {
-          background-image: url('file/./data/schema3.png');
+          background-image: url('./data/schema3.png');
           background-size: 100% 120px;
           height: 150px;
           background-position: center center;

@@ -13,6 +13,5 @@ scikit-build
 matplotlib
 opencv-python
 pandas
-bcrypt
-awscli
 boto3
+os

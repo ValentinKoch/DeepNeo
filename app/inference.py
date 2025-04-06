@@ -90,6 +90,7 @@ def update_neointima(range_string, save_path, nr_updates):
             True,
             im_path_seg,
             im_path_class,
+            schematic_path=os.path.join(save_path, "schematic.png")
         ),
         nr_images - 1,
         html_summary,
@@ -104,8 +105,8 @@ def inference_neointima(range_string, dataloader, seg_model, class_model, save_p
     os.makedirs(os.path.join(save_path, "quadrant_predictions"))
 
     device = torch.device('cuda:0' if torch.cuda.is_available() else 'cpu')
-    print("DEVICE")
-    print(device)
+    print("Using device:", device)
+
     seg_model = seg_model.to(device)
     class_model = class_model.to(device)
 
@@ -142,8 +143,8 @@ def inference_neointima(range_string, dataloader, seg_model, class_model, save_p
             all_quadrant_class_predictions = get_test_time_augmented_predictions(
                 class_model, quadranted_images
             )
-
         class_predictions = np.argmax(all_quadrant_class_predictions, axis=1)
+
         class_prediction_chunks = [
             class_predictions[x : x + 4] for x in range(0, len(class_predictions), 4)
         ]

@@ -96,7 +96,7 @@ def remove_old_data():
     for dir_path in dirs_to_clean:
         clean_directory(dir_path)
 
-    remove_empty_folders(config.TMP_PATH)
+    #remove_empty_folders(config.TMP_PATH)
 
 
 def clean_directory(dir_path):
@@ -199,11 +199,9 @@ def process_dicom(dicom_file):
     patient_id = getattr(ds, "PatientID", None).replace("/", "_").replace(" ","").replace("#","")
     slice_thickness,pixel_spacing=get_slice_thickness_and_spacing(ds)
 
-    save_path = (
-        os.path.join(config.FILE_DIR, patient_id)
-        + "_"
-        + datetime.now().strftime("%H:%M:%S.%f")
-    )
+    timestamp = datetime.now().strftime("%H-%M-%S-%f")  # Replaces colons and dot
+    save_path = os.path.join(config.FILE_DIR, f"{patient_id}_{timestamp}")
+
     if "None" in save_path:
         save_path = save_path.replace("None", get_random_string(6))
         

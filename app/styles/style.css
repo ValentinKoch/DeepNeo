@@ -39,12 +39,37 @@
     font-weight: bold;
     color: #000000;
 }
-.column {
-float: left;
-width: 33.33%;
-padding: 8px;
-color: #000000;
+
+#viz_html {
+    transition: height 0.3s ease;
+    overflow-y: auto;
+  }
+  
+.collapsed-html {
+    height: 100px !important;
 }
+
+.expanded-html {
+    height: 600px !important;
+}
+
+.row {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: space-between;
+}
+
+.column {
+    flex: 1 1 30%;
+    min-width: 300px;
+    padding: 8px;
+    box-sizing: border-box;
+}
+
+img.legend-img {
+    width: 100%;
+    max-width: 400px;
+  }
 
 .column2 {
     padding: 8px;
@@ -88,7 +113,7 @@ background: transparent;
 
 #sliderelement0
 input[type="range"] {
-      background-image: url('file/./data/schema0.png');
+      background-image: url('./data/schema0.png');
       background-size: 100% 120px;
       height: 150px;
       background-position: center center;
@@ -100,7 +125,7 @@ input[type="range"] {
     
 #sliderelement1
 input[type="range"] {
-      background-image: url('file/./data/schema1.png');
+      background-image: url('./data/schema1.png');
       background-size: 100% 120px;
       height: 150px;
       background-position: center center;
@@ -111,7 +136,7 @@ input[type="range"] {
     }
 #sliderelement2
 input[type="range"] {
-      background-image: url('file/./data/schema2.png');
+      background-image: url('./data/schema2.png');
       background-size: 100% 120px;
       height: 150px;
       background-position: center center;
@@ -122,7 +147,7 @@ input[type="range"] {
     }
 #sliderelement3
 input[type="range"] {
-      background-image: url('file/./data/schema3.png');
+      background-image: url('./data/schema3.png');
       background-size: 100% 120px;
       height: 150px;
       background-position: center center;

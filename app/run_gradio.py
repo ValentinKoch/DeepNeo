@@ -3,18 +3,15 @@ import os
 import time
 from glob import glob
 
-import bcrypt
 import gradio as gr
 import torch
-import yaml
-from botocore.exceptions import ClientError
 from torch.utils.data import DataLoader
 from PIL import Image
 
 import config
 from data_handler import process_dicom,process_zip
 from dataset import InferenceDataset
-from html_handler import create_html, image_html
+from html_handler import create_html, image_html, image_html_embed, expand_visualization_html, collapse_visualization_html
 from inference import inference_neointima, update_wrap
 import torch.nn as nn
 
@@ -27,13 +24,15 @@ from segmentation_models_pytorch.encoders import get_encoder
 from segmentation_models_pytorch.base import SegmentationHead
 from segmentation_models_pytorch.base import initialization as init
 import numpy as np
-
+import bcrypt
+import yaml
+from botocore.exceptions import ClientError
 IMAGE_SIZE_QUADRANT=224
 IMAGE_SIZE_SEGMENTATION=512
 
-CLASS_MODEL_PATH="/home/ubuntu/DeepNeo/models/class_model_deep_neo.pth"
-SEG_MODEL_PATH="/home/ubuntu/DeepNeo/models/model_stent_end.pth"
-ZIP_PATH="/home/ubuntu/DeepNeo/" 
+CLASS_MODEL_PATH="./models/class_model_deep_neo.pth"
+SEG_MODEL_PATH="./models/model_stent_end.pth"
+ZIP_PATH=config.ZIP_PATH
 NUM_CLASSES=4
 
 os.environ['CUDA_LAUNCH_BLOCKING'] = '1'
@@ -87,7 +86,7 @@ class SegmentationModel(torch.nn.Module):
 
         if(hasattr(self, "segmentation_head")):
            if( self.segmentation_head is not None):
-                decoder_output = self.decoder(*features)
+                decoder_output = self.decoder(features)
                 masks = self.segmentation_head(decoder_output)
 
         if self.classification_head is not None:
@@ -210,14 +209,15 @@ def main(dicom_file, stent_range):
             image_path,slice_thickness_val,pixel_spacing_val=process_zip(dicom_file)
         else:
             image_path,slice_thickness_val,pixel_spacing_val = process_dicom(dicom_file)
-
+        a = os.path.join(image_path, "raw_images")
         all_images = sorted(
             glob(
-                os.path.join(config.FILE_DIR, image_path, "raw_images")
+                os.path.join(image_path, "raw_images")
                 + "/*"
                 + config.IMAGE_TYPE
             )
         )
+
         dataset = InferenceDataset(all_images)
         dataloader = DataLoader(
             dataset,
@@ -226,10 +226,10 @@ def main(dicom_file, stent_range):
             num_workers=0,
             drop_last=False,
         )
-
         vis_out, image_path_gr, html_visualization, nr_images, html_summary = inference_neointima(
             stent_range, dataloader, SEG_MODEL, CLASS_MODEL, image_path,slice_thickness_val,pixel_spacing_val)
-        legend = 'legend.png'
+        Legend = gr.HTML(visible=False)
+        legend_path = os.path.join(config.STYLE_PATH, "legend.png")
         
         return (
             vis_out,
@@ -243,7 +243,8 @@ def main(dicom_file, stent_range):
             1,
             pixel_spacing_val,
             slice_thickness_val,
-            gr.update(value=image_html("/home/ubuntu/DeepNeo/app/styles/" + legend), visible=True) #legend
+            gr.update(value=image_html_embed(legend_path), visible=True),
+            gr.update(elem_classes="expanded-html")
         )
     
     except ClientError as e:
@@ -251,16 +252,6 @@ def main(dicom_file, stent_range):
         raise FileNotFoundError(
             "File not found. Please upload first and allow some time for the upload to finish."
         )
-
-
-def check_credentials(username, password):
-    with open("/home/ubuntu/ece-dev-deepneo/gradi/app/pw_files/pw_data.yaml") as f:
-        pw_dict = yaml.safe_load(f)
-        if not username in pw_dict.keys():
-            return False
-        else:
-            hashed_pw = pw_dict[username]
-            return bcrypt.checkpw(str.encode(password), str.encode(hashed_pw))
 
 def change_vals(val):
     return (
@@ -270,167 +261,160 @@ def change_vals(val):
         gr.update(maximum=val),
     )
 
-with gr.Blocks(css=config.CSS_FILE, title="DeepNeo") as demo:
-    image_path_gr = gr.State("")
-    nr_updates = gr.State(0)
-    nr_images = gr.Number(value=1, interactive=True, visible=False)
-    timestamp_gr = gr.State(value="")
-    summary_html = gr.State(value="")
-    pixel_spacing=gr.State(value=None)
-    slice_thickness=gr.State(value=None)
+with gr.Blocks(title="DeepNeo", fill_width=True) as demo:
+    with gr.Row():
+        with gr.Column(min_width=500):
+            gr.HTML(f"<style>{open(config.CSS_FILE).read()}</style>")
+            gr.HTML("<script>window.onload = () => { document.title = 'DeepNeo'; }</script>")
 
-    init_logo = gr.HTML(
-        value=image_html("/home/ubuntu/DeepNeo/app/styles/logos/deepneo_logo_plus.png"),
-        visible=True,
-    )
-    with gr.Row() as initial_row:
-        clinical_use_checkbox=gr.Checkbox(label="This Software is strictly for academic research use only and it is not approved for clinical, diagnostic or treatment purposes. Please accept to proceed.",elem_classes="checkbox")
-    with gr.Row() as accept_row:
-        init_button = gr.Button("Accept")
+            image_path_gr = gr.State("")
+            nr_updates = gr.State(0)
+            nr_images = gr.Number(value=1, interactive=True, visible=False)
+            timestamp_gr = gr.State(value="")
+            summary_html = gr.State(value="")
+            pixel_spacing = gr.State(value=None)
+            slice_thickness = gr.State(value=None)
 
-
-    with gr.Row(visible=False) as secondary_row:
-        inp = gr.File(label='Upload pullback')
-        with gr.Tab("Legend"):
-            Legend = gr.HTML(
-                visible=False
+            init_logo = gr.Image(
+                value=os.path.join(config.STYLE_PATH, "logos/deepneo_logo_plus.png"),
+                show_label=False,
+                show_download_button=False,
             )
 
-        with gr.Tab("Download"):
-            vis_out = gr.File(label="Download")
-        with gr.Tab("Info"):
-            info = gr.Text("Input either a DICOM file or a ",label="")
+            with gr.Row() as initial_row:
+                clinical_use_checkbox = gr.Checkbox(
+                    label="This Software is strictly for academic research use only and it is not approved for clinical, diagnostic or treatment purposes. Please accept to proceed.",
+                    elem_classes="checkbox"
+                )
 
-        logo = gr.HTML(
-            value=image_html("/home/ubuntu/DeepNeo/app/styles/logos/deepneo_logo_plus.png"),
-        )
+            with gr.Row() as accept_row:
+                init_button = gr.Button("Accept")
 
-    with gr.Row(visible=False) as visualization_row:
-        with gr.Column(scale=5):
-            html_visualization = gr.HTML(interactive=True)
-        
-    # schematic_overview=gr.HTML(visible=False,interactive=True)
-    slider0 = gr.Slider(
-        label="Frame", maximum=1, step=1, visible=False, elem_id="sliderelement0"
-    )
-    slider1 = gr.Slider(
-        label="Frame", maximum=1, step=1, visible=False, elem_id="sliderelement1"
-    )
-    slider2 = gr.Slider(
-        label="Frame", maximum=1, step=1, visible=False, elem_id="sliderelement2"
-    )
-    slider3 = gr.Slider(
-        label="Frame", maximum=1, step=1, visible=False, elem_id="sliderelement3"
-    )
+            with gr.Row(visible=False) as secondary_row:
+                inp = gr.File(label='Upload pullback')
 
-    with gr.Row(visible=False).style(equal_height=True) as another_row:
-        with gr.Column(visible=False) as button_col:
-            with gr.Row():
-                btn_run_seg = gr.Button("Neointima analysis", visible=True)
-                button_update = gr.Button("Update", visible=False)
+                with gr.Tab("Legend"):
+                    Legend = gr.HTML(visible=False)
 
-        with gr.Column():
-            stent_range = gr.Textbox(max_lines=1, label="Manually input range", visible=False)
-            
+                with gr.Tab("Download"):
+                    vis_out = gr.File(label="Download")
 
-    def initialize_neointima(checkbox):
-        if checkbox:
-            timestamp = time.time_ns()
+                with gr.Tab("Info"):
+                    info = gr.Text("Input either a DICOM or a .zip file ", label="")
 
-            return {
-                timestamp_gr: timestamp,
-                secondary_row: gr.update(visible=True),
-                inp: gr.update(visible=True),
-                stent_range: gr.update(visible=True),
-                button_col: gr.update(visible=True),
-                visualization_row: gr.update(visible=True),
-                init_logo: gr.update(visible=False),
-                initial_row: gr.update(visible=False),
-                accept_row: gr.update(visible=False),
-                another_row:gr.update(visible=True)
-            }
-        else:
-            raise ValueError("Please accept the terms to proceed.")
+                logo = gr.Image(
+                    value=os.path.join(config.STYLE_PATH, "logos/deepneo_logo_plus.png"),
+                    show_label=False,
+                    show_download_button=False,
+                    min_width=300,
+                )
 
-    init_button.click(
-        fn=initialize_neointima,
-        inputs=[clinical_use_checkbox],
-        outputs=[
-            timestamp_gr,
-            secondary_row,
-            inp,
-            stent_range,
-            button_col,
-            visualization_row,
-            init_logo,
-            initial_row,
-            accept_row,
-            another_row,
-        ],
-    )
-    nr_images.change(
-        fn=change_vals, inputs=nr_images, outputs=[slider0, slider1, slider2, slider3]
-    )
-    btn_run_seg.click(
-        fn=main,
-        inputs=[inp, stent_range],
-        outputs=[
-            vis_out,
-            image_path_gr,
-            html_visualization,
-            nr_images,
-            button_update,
-            btn_run_seg,
-            summary_html,
-            slider0,
-            nr_updates,
-            pixel_spacing,
-            slice_thickness,
-            Legend,
-        ],
-    )
-    button_update.click(
-        fn=update_wrap, 
-        inputs=[stent_range, image_path_gr, nr_updates, slice_thickness, pixel_spacing],
-        outputs=[
-            vis_out,
-            html_visualization,
-            summary_html,
-            nr_updates,
-            slider0,
-            slider1,
-            slider2,
-            slider3,
-        ],
-        #file_path,file_path, html, html_summary, nr_updates + 1, s0, s1, s2, s3
-    )
-    slider0.change(
-        create_html,
-        inputs=[image_path_gr, summary_html, slider0],
-        outputs=html_visualization,
-    )
-    slider1.change(
-        create_html,
-        inputs=[image_path_gr, summary_html, slider1],
-        outputs=html_visualization,
-    )
-    slider2.change(
-        create_html,
-        inputs=[image_path_gr, summary_html, slider2],
-        outputs=html_visualization,
-    )
-    slider3.change(
-        create_html,
-        inputs=[image_path_gr, summary_html, slider3],
-        outputs=html_visualization,
-    )
+            with gr.Row(visible=False) as visualization_row:
+                with gr.Column(min_width=1000):
+                    html_visualization = gr.HTML(elem_id="viz_html", elem_classes="collapsed-html")
+
+            # Sliders
+            slider0 = gr.Slider(label="Frame", maximum=1, step=1, visible=False, elem_id="sliderelement0")
+            slider1 = gr.Slider(label="Frame", maximum=1, step=1, visible=False, elem_id="sliderelement1")
+            slider2 = gr.Slider(label="Frame", maximum=1, step=1, visible=False, elem_id="sliderelement2")
+            slider3 = gr.Slider(label="Frame", maximum=1, step=1, visible=False, elem_id="sliderelement3")
+
+            with gr.Row(visible=False) as another_row:
+                with gr.Column(visible=False, min_width=500) as button_col:
+                    with gr.Row():
+                        btn_run_seg = gr.Button("Neointima analysis", visible=True)
+                        button_update = gr.Button("Update", visible=False)
+
+                with gr.Column(min_width=500):
+                    stent_range = gr.Textbox(max_lines=1, label="Manually input range", visible=False)
+
+            # Init function
+            def initialize_neointima(checkbox):
+                if checkbox:
+                    timestamp = time.time_ns()
+                    return {
+                        timestamp_gr: timestamp,
+                        secondary_row: gr.update(visible=True),
+                        inp: gr.update(visible=True),
+                        stent_range: gr.update(visible=True),
+                        button_col: gr.update(visible=True),
+                        visualization_row: gr.update(visible=True),
+                        init_logo: gr.update(visible=False),
+                        initial_row: gr.update(visible=False),
+                        accept_row: gr.update(visible=False),
+                        another_row: gr.update(visible=True),
+                    }
+                else:
+                    raise ValueError("Please accept the terms to proceed.")
+
+            init_button.click(
+                fn=initialize_neointima,
+                inputs=[clinical_use_checkbox],
+                outputs=[
+                    timestamp_gr,
+                    secondary_row,
+                    inp,
+                    stent_range,
+                    button_col,
+                    visualization_row,
+                    init_logo,
+                    initial_row,
+                    accept_row,
+                    another_row,
+                ],
+            )
+
+            nr_images.change(
+                fn=change_vals,
+                inputs=nr_images,
+                outputs=[slider0, slider1, slider2, slider3],
+            )
+
+            btn_run_seg.click(
+                fn=main,
+                inputs=[inp, stent_range],
+                outputs=[
+                    vis_out,
+                    image_path_gr,
+                    html_visualization,
+                    nr_images,
+                    button_update,
+                    btn_run_seg,
+                    summary_html,
+                    slider0,
+                    nr_updates,
+                    pixel_spacing,
+                    slice_thickness,
+                    Legend,
+                    html_visualization,
+                ],
+            )
+
+            button_update.click(
+                fn=update_wrap,
+                inputs=[stent_range, image_path_gr, nr_updates, slice_thickness, pixel_spacing],
+                outputs=[
+                    vis_out,
+                    html_visualization,
+                    summary_html,
+                    nr_updates,
+                    slider0,
+                    slider1,
+                    slider2,
+                    slider3,
+                ],
+            )
+
+            slider0.change(create_html, inputs=[image_path_gr, summary_html, slider0], outputs=html_visualization)
+            slider1.change(create_html, inputs=[image_path_gr, summary_html, slider1], outputs=html_visualization)
+            slider2.change(create_html, inputs=[image_path_gr, summary_html, slider2], outputs=html_visualization)
+            slider3.change(create_html, inputs=[image_path_gr, summary_html, slider3], outputs=html_visualization)
+
 
 demo.launch(
-    auth=check_credentials,
     server_name="0.0.0.0",
     show_error=True,
-    favicon_path="/home/ubuntu/ece-dev-deepneo/gradi/app/styles/deepneo_small.png",
-    auth_message="Please provide your username and password.",
+    favicon_path=os.path.join(config.STYLE_PATH, "deepneo_small.png"),
     show_api=False,
     share=True,
 )

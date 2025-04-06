@@ -210,19 +210,18 @@ def draw_final_schematic_view(prediction_df,mask_folder):
         return overview       
 
 def calculate_shift(mask_a_line):
-    # Find indices where the mask is dark gray (lumen)
-    lumen_indices = np.where(mask_a_line == 3)[0]  # Assuming lumen is marked by value 3 and mask is 2D
-    #print("len lumen:", len(lumen_indices))
+    lumen_indices = np.where(mask_a_line == 3)[0]  
+
     if len(lumen_indices) == 0:
         return 0  # No lumen found, no shift needed
     # Calculate center of lumen
     center_of_lumen = int(np.mean(lumen_indices))
-    #print("center lumen: ", center_of_lumen)
+    
     # Determine the shift needed to center the lumen
     center_of_frame = mask_a_line.shape[0] // 2
-    #print("center frame: ", center_of_frame)
+    
     shift_amount = center_of_frame - center_of_lumen
-    #print("shift amount: ", shift_amount)
+    
     return shift_amount
 
 def circular_shift(mask_a_line, shift_amount):
