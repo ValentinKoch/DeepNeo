@@ -24,7 +24,6 @@ from segmentation_models_pytorch.encoders import get_encoder
 from segmentation_models_pytorch.base import SegmentationHead
 from segmentation_models_pytorch.base import initialization as init
 import numpy as np
-import bcrypt
 import yaml
 from botocore.exceptions import ClientError
 IMAGE_SIZE_QUADRANT=224
@@ -134,7 +133,6 @@ class UnetPlusPlus(SegmentationModel):
             encoder_channels=self.encoder.out_channels,
             decoder_channels=decoder_channels,
             n_blocks=encoder_depth,
-            use_batchnorm=decoder_use_batchnorm,
             center=True if encoder_name.startswith("vgg") else False,
             attention_type=decoder_attention_type,
         )

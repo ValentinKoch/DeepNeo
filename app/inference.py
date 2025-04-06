@@ -16,7 +16,7 @@ import torch.nn.functional as F
 from data_handler import (get_lumen_radius, get_neointima_thickness,
                           get_quadranted_images, get_smallest_lumen,
                           get_stent_nr, postprocess, process_range_string,
-                          save_files_to_s3, summarize,get_class_volume_mm2)
+                          summarize,get_class_volume_mm2)
 from html_handler import create_html
 from visualization import (colour_image_border, mark_and_draw,
                            draw_final_schematic_view, visualize_all)

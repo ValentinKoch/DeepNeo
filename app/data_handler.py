@@ -11,8 +11,6 @@ from typing import List
 import zipfile
 from datetime import datetime
 
-
-import boto3
 import numpy as np
 import pandas as pd
 import pydicom as dicom
@@ -575,12 +573,3 @@ def summary_dict_to_str(summary_dict):
         str(summary_dict["avg in-stent lumen radius"])+" mm"
     )
     return summary_dict
-
-
-def save_files_to_s3(filename):
-    s3 = boto3.client("s3")
-    s3.upload_file(
-        Filename=filename,
-        Bucket="deepneo-storage",
-        Key=Path(filename).name,
-    )
