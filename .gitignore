@@ -1,0 +1,8 @@
+/app/__pycache__
+/app/tmp
+/app/models
+/app/.gradio
+/sample_input
+/app/data/IMG001
+/app/zipped_data
+/app/data/

@@ -45,11 +45,12 @@ cd app
 ```
 #### **Step 3: Create a Conda Environment**
 ```git
-conda create --name DeepNeo --file requirements.txt
+conda create --name DeepNeo python=3.10
 ```
-#### **Step 4: Activate the Environment**
+#### **Step 4: Activate the Environment and Install Requirements**
 ```git
 conda activate DeepNeo
+pip install -r requirements.txt
 ```
 #### **Step 5: Update Configuration File**
 Before running the application, update the configuration file to match your system's paths. Locate the config.py file in the app folder and make the necessary adjustments to the folder paths.
