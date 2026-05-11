@@ -65,3 +65,11 @@ After running the script, a local server will start, and a URL will be generated
 
 ### Models & Contact
 We are very happy to provide models, please request them at [Zenodo](https://zenodo.org/records/14556455) and contact Valentin Koch (valentin.koch@helmholtz-munich.de), Carsten Marr (carsten.marr@helmholtz-munich.de), or Michael Joner (joner@dhm.mhn.de).
+
+Copyright © 2025 Helmholtz Munich. All rights reserved.
+
+As of the date of publication of the current license, the use, reproduction, and distribution of this software are subject exclusively to the terms and conditions set out in the attached Academic Use License (“License”). Any past or ongoing download, access, or use of the software is permitted only to the extent that such use would have been permissible under the terms of the present License.
+
+By continuing to use, download, or access this software, users acknowledge and agree to be bound by the terms of the Academic Use License. Any commercial use, redistribution, sublicensing, or modification of this software outside the scope of the License is strictly prohibited without prior written consent of the copyright holder(s).
+
+For inquiries regarding commercial licensing or permissions beyond the scope of the Academic Use License, please contact: innovationandtranslation@helmholtz-munich.de
